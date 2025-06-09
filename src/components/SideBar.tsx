@@ -5,6 +5,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@radix
 import { Button } from "./ui/button";
 import { cn } from "@/lib/utils";
 import { LogOut } from "lucide-react";
+import useSound from "use-sound";
+import { usePreferences } from "@/store/usePreferences";
 
 interface SideBarProps {
     isCollapsed?: boolean;
@@ -13,7 +15,8 @@ interface SideBarProps {
 
 const SideBar = ({ isCollapsed, users }: SideBarProps) => {
     const selectedUser = USERS[0]
-
+    const { soundEnabled } = usePreferences();
+    const [playClickSound] = useSound("/sounds/mouse-click.mp3")
 
     return (
         <div className="relative flex flex-col h-full gap-4 p-2 data-[collapsed=true]:p-2 max-h-full overflow-auto bg-background" >
@@ -31,7 +34,9 @@ const SideBar = ({ isCollapsed, users }: SideBarProps) => {
                         <TooltipProvider key={idx} >
                             <Tooltip delayDuration={0}>
                                 <TooltipTrigger asChild>
-                                    <div>
+                                    <div
+                                        onClick={() => soundEnabled && playClickSound()}
+                                    >
                                         <Avatar className="my-1 flex justify-center items-center"
                                         >
                                             <AvatarImage
@@ -61,6 +66,7 @@ const SideBar = ({ isCollapsed, users }: SideBarProps) => {
                                 size="xl"
                                 className={cn("w-full justify-start gap-4 my-1", selectedUser?.email === user.email &&
                                     "dark:bg-muted dark:text-white dark:hover:bg-muted dark:hover:text-white shrink")}
+                                onClick={() => soundEnabled && playClickSound()}
                             >
                                 <Avatar className='flex justify-center items-center'>
                                     <AvatarImage

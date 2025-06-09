@@ -1,17 +1,42 @@
 import { AnimatePresence, motion } from "framer-motion"
-import { ImageIcon } from "lucide-react"
+import { ImageIcon, Loader, SendHorizonalIcon, ThumbsUp } from "lucide-react"
 import { Textarea } from "../ui/textarea";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import EmojiPicker from "./EmojiPicker";
+import { Button } from "../ui/button";
+import useSound from "use-sound";
+import { usePreferences } from "@/store/usePreferences";
 
 const ChatBottomBar = () => {
 
+
+    const [keyName] = useState(() => Math.random().toString(36).substring(2, 9));
     const [message, setMessage] = useState("");
+    const textAreaRef = useRef<HTMLTextAreaElement | null>(null);
+    const isPending = false
+
+    const { soundEnabled } = usePreferences();
+
+    const [playSound1] = useSound("/sounds/keystroke1.mp3");
+    const [playSound2] = useSound("/sounds/keystroke2.mp3");
+    const [playSound3] = useSound("/sounds/keystroke3.mp3");
+    const [playSound4] = useSound("/sounds/keystroke4.mp3");
+
+    const playSoundFunctions = [playSound1, playSound2, playSound3, playSound4];
+
+    const playRandomKeyStrokeSound = () => {
+        const randomIndex = Math.floor(Math.random() * playSoundFunctions.length)
+        if (soundEnabled) {
+            playSoundFunctions[randomIndex]();
+        }
+    };
 
 
     return <div className="p-2 flex justify-between w-full items-center gap-2" >
         {!message.trim() && <ImageIcon size={20} className="cursor-pointer text-muted-foreground" />}
         <AnimatePresence>
             <motion.div
+                key={keyName} // I have passed keyName as key explicitly to ensure it bypasses the key error from NextJS
                 layout
                 initial={{ opacity: 0, scale: 1 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -33,9 +58,46 @@ const ChatBottomBar = () => {
                     value={message}
                     onChange={(e) => {
                         setMessage(e.target.value);
+                        playRandomKeyStrokeSound();
                     }}
+                    ref={textAreaRef}
                 />
+                <div className="absolute right-2 bottom-0.5 " >
+                    <EmojiPicker
+                        onChange={(emoji) => {
+                            setMessage((prev) => prev + emoji);
+                            if (textAreaRef.current) {
+                                textAreaRef.current.focus();
+                            }
+                        }}
+                    />
+                </div>
             </motion.div>
+            {message.trim() ? (
+                <Button
+                    className="h-9 w-9 dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white shrink-0"
+                    variant={"ghost"}
+                    size={"icon"}
+                >
+                    <SendHorizonalIcon
+                        size={20}
+                        className="text-muted-foreground hover:text-foreground transition" />
+                </Button>
+            ) : (
+                <Button
+                    className='h-9 w-9 dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white shrink-0'
+                    variant={"ghost"}
+                    size={"icon"}
+                >
+                    {!isPending && (
+                        <ThumbsUp
+                            size={20}
+                            className='text-muted-foreground'
+                        />
+                    )}
+                    {isPending && <Loader size={20} className='animate-spin' />}
+                </Button>
+            )}
         </AnimatePresence>
     </div>
 }
