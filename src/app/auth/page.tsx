@@ -1,8 +1,14 @@
 import Image from 'next/image'
 import React from 'react'
 import AuthButtons from './AuthButtons'
+import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server'
+import { redirect } from 'next/navigation'
 
-const page = () => {
+const page = async () => {
+
+    const { isAuthenticated } = getKindeServerSession();
+    if (await isAuthenticated()) { return redirect("/") }
+
     return (
         <div className='flex h-screen w-full' >
             <div className='flex-1 flex overflow-hidden w-full dark:bg-[#e7dadc55] bg-[#dfcfd3] relative justify-center items-center'>
