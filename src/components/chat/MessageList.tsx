@@ -1,17 +1,42 @@
-import { messages, USERS } from '@/db/dummy';
+import { getMessages } from '@/actions/message.actions';
 import { cn } from '@/lib/utils';
+import { useSelectedUser } from '@/store/useSelectedUser';
+import { useKindeBrowserClient } from '@kinde-oss/kinde-auth-nextjs';
 import { Avatar, AvatarImage } from '@radix-ui/react-avatar';
+import { useQuery } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useEffect, useRef } from 'react';
+import MessageSkeleton from '../skeletons/MessageSkeleton';
 
 const MessageList = () => {
 
-    const selectedUser = USERS[0]
-    const currentUser = USERS[1]
+    const { selectedUser } = useSelectedUser()
+    const { user: currentUser, isLoading: isMessagesLoading } = useKindeBrowserClient()
+    const messageContainerRef = useRef<HTMLDivElement>(null);
 
-    return <div className="w-full overflow-y-auto overflow-x-hidden h-full flex flex-col" >
+    const { data: messages, } = useQuery({
+        queryKey: ["messages", selectedUser?.id],
+        queryFn: async () => {
+            if (selectedUser && currentUser) {
+                return await getMessages(selectedUser?.id, currentUser?.id);
+            }
+        },
+        enabled: !!selectedUser && !!currentUser && !isMessagesLoading,
+    });
+
+    console.log('first messages', messages)
+    console.log('user', currentUser)
+
+    useEffect(() => {
+        if (messageContainerRef.current) {
+            messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight;
+        }
+    }, [messages]);
+
+    return <div ref={messageContainerRef} className="w-full overflow-y-auto overflow-x-hidden h-full flex flex-col" >
         <AnimatePresence >
-            {
-                messages.map((message, index) => (
+            {!isMessagesLoading &&
+                messages?.map((message, index) => (
                     <motion.div
                         key={index}
                         layout
@@ -30,33 +55,37 @@ const MessageList = () => {
                             originX: 0.5,
                             originY: 0.5,
                         }}
-                        className={cn("flex flex-col gap-2 p-4 whitespace-pre-wrap",
-                            message.senderId === currentUser.id ? "items-end" : "items-start",
+                        className={cn(
+                            "flex flex-col gap-2 p-4 whitespace-pre-wrap",
+                            message.senderId === currentUser?.id ? "items-end" : "items-start"
                         )}
                     >
-                        <div className='flex gap-3 items-center' >
-                            {message.senderId === selectedUser.id && (
-                                <Avatar className='flex justify-center items-center' >
+                        <div className='flex gap-3 items-center'>
+                            {message.senderId === selectedUser?.id && (
+                                <Avatar className='flex justify-center items-center'>
                                     <AvatarImage
-                                        src={selectedUser.image}
-                                        alt='User Avatar'
-                                        className='border-2 w-10 xl:w-14  border-white rounded-full'
+                                        src={selectedUser?.image}
+                                        alt='User Image'
+                                        className='border-2 h-8 w-8 border-white rounded-full'
                                     />
                                 </Avatar>
                             )}
-
-                            {message.messageType === 'text' ? (
-                                <span className='bg-accent p-3 rounded-md max-w-xs' >{message?.content}</span>
+                            {message.messageType === "text" ? (
+                                <span className='bg-accent p-3 rounded-md max-w-xs'>{message.content}</span>
                             ) : (
-                                <img src={message.content} alt="Image Message" className='border p-2 rounded h-40 md:h-52 object-cover' />
+                                <img
+                                    src={message.content}
+                                    alt='Message Image'
+                                    className='border p-2 rounded h-40 md:h-52 object-cover'
+                                />
                             )}
 
-                            {message.senderId === currentUser.id && (
-                                <Avatar className='flex justify-center items-center' >
+                            {message.senderId === currentUser?.id && (
+                                <Avatar className='flex justify-center items-center'>
                                     <AvatarImage
-                                        src={currentUser.image}
-                                        alt='User Avatar'
-                                        className='border-2 w-10 xl:w-14  border-white rounded-full'
+                                        src={currentUser?.picture || "/user-placeholder.png"}
+                                        alt='User Image'
+                                        className='border-2 h-8 w-8 border-white rounded-full'
                                     />
                                 </Avatar>
                             )}
@@ -64,6 +93,13 @@ const MessageList = () => {
                     </motion.div>
                 ))
             }
+            {isMessagesLoading && (
+                <>
+                    <MessageSkeleton />
+                    <MessageSkeleton />
+                    <MessageSkeleton />
+                </>
+            )}
         </AnimatePresence>
     </div>
 }
