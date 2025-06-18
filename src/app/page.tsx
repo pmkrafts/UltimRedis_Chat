@@ -22,8 +22,8 @@ async function getUsers(): Promise<User[]> {
     return [];
   }
 
-  // const { getUser } = getKindeServerSession();
-  // const currentUser = await getUser();
+  const { getUser } = getKindeServerSession();
+  const currentUser = await getUser();
 
 
   const pipeline = redis.pipeline();
@@ -32,9 +32,9 @@ async function getUsers(): Promise<User[]> {
 
   const users: User[] = []
   for (const user of results) {
-    //   if (user && user.id !== currentUser?.id) {
-    users.push(user);
-    // }
+    if (user && user.id !== currentUser?.id) {
+      users.push(user);
+    }
   }
 
 

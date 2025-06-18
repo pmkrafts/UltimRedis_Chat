@@ -1,17 +1,21 @@
 import { AnimatePresence, motion } from "framer-motion"
 import { ImageIcon, Loader, SendHorizonalIcon, ThumbsUp } from "lucide-react"
 import { Textarea } from "../ui/textarea";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import EmojiPicker from "./EmojiPicker";
 import { Button } from "../ui/button";
 import useSound from "use-sound";
 import { usePreferences } from "@/store/usePreferences";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { sendMessageAction } from "@/actions/message.actions";
 import { useSelectedUser } from "@/store/useSelectedUser";
 import { CloudinaryUploadWidgetInfo, CldUploadWidget as CloudUploadWidget } from 'next-cloudinary';
 import { Dialog, DialogContent, DialogTitle, DialogFooter, DialogHeader } from "../ui/dialog";
 import Image from "next/image";
+import { useKindeBrowserClient } from "@kinde-oss/kinde-auth-nextjs";
+import { pusherClient } from "@/lib/pusher";
+import { Message } from "@/db/dummy";
+
 
 const ChatBottomBar = () => {
 
@@ -19,9 +23,12 @@ const ChatBottomBar = () => {
     const [keyName] = useState(() => Math.random().toString(36).substring(2, 9));
     const [message, setMessage] = useState("");
     const textAreaRef = useRef<HTMLTextAreaElement | null>(null);
+
     const { selectedUser } = useSelectedUser()
+    const { user: currentUser } = useKindeBrowserClient();
 
     const { soundEnabled } = usePreferences();
+    const queryClient = useQueryClient();
 
     const [imgUrl, setImgUrl] = useState(null as string | null);
 
@@ -29,6 +36,8 @@ const ChatBottomBar = () => {
     const [playSound2] = useSound("/sounds/keystroke2.mp3");
     const [playSound3] = useSound("/sounds/keystroke3.mp3");
     const [playSound4] = useSound("/sounds/keystroke4.mp3");
+
+    const [playNotificationSound] = useSound("/sounds/notification.mp3");
 
     const playSoundFunctions = [playSound1, playSound2, playSound3, playSound4];
 
@@ -66,6 +75,30 @@ const ChatBottomBar = () => {
             setMessage(message + "\n");
         }
     };
+
+
+    useEffect(() => {
+        const channelName = `${currentUser?.id}__${selectedUser?.id}`.split("__").sort().join("__");
+        const channel = pusherClient?.subscribe(channelName);
+
+        const handleNewMessage = (data: { message: Message }) => {
+            queryClient.setQueryData(["messages", selectedUser?.id], (oldMessages: Message[]) => {
+                return [...oldMessages, data.message];
+            });
+
+            if (soundEnabled && data.message.senderId !== currentUser?.id) {
+                playNotificationSound();
+            }
+        };
+
+        channel.bind("newMessage", handleNewMessage);
+
+        // ! Absolutely important, otherwise the event listener will be added multiple times which means you'll see the incoming new message multiple times
+        return () => {
+            channel.unbind("newMessage", handleNewMessage);
+            pusherClient.unsubscribe(channelName);
+        };
+    }, [currentUser?.id, selectedUser?.id, queryClient, playNotificationSound, soundEnabled]);
 
     return <div className="p-2 flex justify-between w-full items-center gap-2" >
         {!message.trim() && (
