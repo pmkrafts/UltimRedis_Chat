@@ -9,6 +9,9 @@ import { usePreferences } from "@/store/usePreferences";
 import { useMutation } from "@tanstack/react-query";
 import { sendMessageAction } from "@/actions/message.actions";
 import { useSelectedUser } from "@/store/useSelectedUser";
+import { CloudinaryUploadWidgetInfo, CldUploadWidget as CloudUploadWidget } from 'next-cloudinary';
+import { Dialog, DialogContent, DialogTitle, DialogFooter, DialogHeader } from "../ui/dialog";
+import Image from "next/image";
 
 const ChatBottomBar = () => {
 
@@ -19,6 +22,8 @@ const ChatBottomBar = () => {
     const { selectedUser } = useSelectedUser()
 
     const { soundEnabled } = usePreferences();
+
+    const [imgUrl, setImgUrl] = useState(null as string | null);
 
     const [playSound1] = useSound("/sounds/keystroke1.mp3");
     const [playSound2] = useSound("/sounds/keystroke2.mp3");
@@ -63,7 +68,57 @@ const ChatBottomBar = () => {
     };
 
     return <div className="p-2 flex justify-between w-full items-center gap-2" >
-        {!message.trim() && <ImageIcon size={20} className="cursor-pointer text-muted-foreground" />}
+        {!message.trim() && (
+            <CloudUploadWidget
+                signatureEndpoint={"/api/sign-cloudinary-params"}
+                onSuccess={(result, { widget }) => {
+                    const imageUrl = (result.info as CloudinaryUploadWidgetInfo).secure_url;
+                    setImgUrl(imageUrl)
+                    widget.close()
+
+                }}
+            >
+                {({ open }) => {
+                    return (
+                        <ImageIcon
+                            onClick={() => open()}
+                            size={20}
+                            className="cursor-pointer text-muted-foreground"
+                        >
+                            Upload an Image
+                        </ImageIcon>
+                    );
+                }}
+            </CloudUploadWidget>
+        )}
+
+        <Dialog open={!!imgUrl}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Image Preview</DialogTitle>
+                </DialogHeader>
+                <div className='flex justify-center items-center relative h-96 w-full mx-auto'>
+                    {imgUrl && (
+                        <Image src={imgUrl} alt='Image Preview' fill className='object-contain' />
+                    )}
+                </div>
+
+                <DialogFooter>
+                    <Button
+                        type='submit'
+                        onClick={() => {
+                            if (selectedUser?.id) {
+                                sendMessage({ content: imgUrl!, messageType: "image", receiverId: selectedUser.id });
+                            }
+                            setImgUrl(null);
+                        }}
+                    >
+                        Send
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+
         <AnimatePresence>
             <motion.div
                 key={keyName} // I have passed keyName as key explicitly to ensure it bypasses the key error from NextJS
