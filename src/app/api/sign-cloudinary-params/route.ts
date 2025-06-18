@@ -10,7 +10,11 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { paramsToSign } = body;
 
-    const signature = cloudinary.utils.api_sign_request(paramsToSign, process.env.CLOUDINARY_API_SECRET);
+    const apiSecret = process.env.CLOUDINARY_API_SECRET;
+    if (!apiSecret) {
+        throw new Error("CLOUDINARY_API_SECRET environment variable is not defined");
+    }
+    const signature = cloudinary.utils.api_sign_request(paramsToSign, apiSecret);
 
     return Response.json({ signature });
 }

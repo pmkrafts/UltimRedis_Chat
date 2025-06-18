@@ -16,7 +16,9 @@ import PusherClient from "pusher-js";
 // })
 
 declare global {
+    // eslint-disable-next-line no-var
     var pusherServer: PusherServer | undefined;
+    // eslint-disable-next-line no-var
     var pusherClient: PusherClient | undefined;
 }
 
