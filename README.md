@@ -85,7 +85,7 @@ A modern real-time chat application built with Next.js, React, TypeScript, and a
    ```
 
 3. **Set up environment variables:**
-   - Copy `.env.local.example` to `.env.local` and fill in your credentials for Kinde, Upstash Redis, Pusher, and Cloudinary.
+   - Copy `._env.example` to `.env.local` and fill in your credentials for Kinde, Upstash Redis, Pusher, and Cloudinary.
 
 4. **Run the development server:**
    ```sh
