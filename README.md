@@ -75,7 +75,7 @@ A modern real-time chat application built with Next.js, React, TypeScript, and a
 
 1. **Clone the repository:**
    ```sh
-   git clone https://github.com/your-username/chat-app.git
+   git clone https://github.com/goaldiggerpm/UltimRedis_Chat.git
    cd chat-app
    ```
 
