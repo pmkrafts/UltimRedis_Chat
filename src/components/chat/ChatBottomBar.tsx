@@ -48,17 +48,33 @@ const ChatBottomBar = () => {
         }
     };
 
+    // const { mutate: sendMessage, isPending } = useMutation({
+    //     mutationFn: sendMessageAction
+    // })
+
     const { mutate: sendMessage, isPending } = useMutation({
-        mutationFn: sendMessageAction
-    })
+        mutationFn: sendMessageAction,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["messages", selectedUser?.id] });
+        }
+    });
 
     const handleSendMessage = () => {
         if (!message.trim()) return;
 
+        // sendMessage({
+        //     content: message,
+        //     messageType: "text",
+        //     receiverId: selectedUser?.id || "text"
+        // });
         sendMessage({
             content: message,
             messageType: "text",
             receiverId: selectedUser?.id || "text"
+        }, {
+            onSuccess: () => {
+                queryClient.invalidateQueries({ queryKey: ["messages", selectedUser?.id] });
+            }
         });
         setMessage("");
 
@@ -84,9 +100,13 @@ const ChatBottomBar = () => {
         const channel = pusherClient?.subscribe(channelName);
 
         const handleNewMessage = (data: { message: Message }) => {
-            queryClient.setQueryData(["messages", selectedUser?.id], (oldMessages: Message[]) => {
-                return [...oldMessages, data.message];
-            });
+            // queryClient.setQueryData(["messages", selectedUser?.id], (oldMessages: Message[]) => {
+            //     return [...oldMessages, data.message];
+            // });
+            queryClient.setQueryData<Message[]>(["messages", selectedUser?.id], (oldMessages = []) => [
+                ...oldMessages,
+                data.message,
+            ]);
 
             if (soundEnabled && data.message.senderId !== currentUser?.id) {
                 playNotificationSound();

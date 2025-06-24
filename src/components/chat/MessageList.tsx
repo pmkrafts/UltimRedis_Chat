@@ -14,12 +14,23 @@ const MessageList = () => {
     const { user: currentUser, isLoading: isUserLoading } = useKindeBrowserClient()
     const messageContainerRef = useRef<HTMLDivElement>(null);
 
+    // const { data: messages, isLoading: isMessagesLoading } = useQuery({
+    //     queryKey: ["messages", selectedUser?.id],
+    //     queryFn: async () => {
+    //         if (selectedUser && currentUser) {
+    //             return await getMessages(selectedUser?.id, currentUser?.id);
+    //         }
+    //     },
+    //     enabled: !!selectedUser && !!currentUser && !isUserLoading,
+    // });
+
     const { data: messages, isLoading: isMessagesLoading } = useQuery({
         queryKey: ["messages", selectedUser?.id],
         queryFn: async () => {
             if (selectedUser && currentUser) {
-                return await getMessages(selectedUser?.id, currentUser?.id);
+                return await getMessages(selectedUser.id, currentUser.id);
             }
+            return [];
         },
         enabled: !!selectedUser && !!currentUser && !isUserLoading,
     });
