@@ -11,17 +11,17 @@ import MessageSkeleton from '../skeletons/MessageSkeleton';
 const MessageList = () => {
 
     const { selectedUser } = useSelectedUser()
-    const { user: currentUser, isLoading: isMessagesLoading } = useKindeBrowserClient()
+    const { user: currentUser, isLoading: isUserLoading } = useKindeBrowserClient()
     const messageContainerRef = useRef<HTMLDivElement>(null);
 
-    const { data: messages, } = useQuery({
+    const { data: messages, isLoading: isMessagesLoading } = useQuery({
         queryKey: ["messages", selectedUser?.id],
         queryFn: async () => {
             if (selectedUser && currentUser) {
                 return await getMessages(selectedUser?.id, currentUser?.id);
             }
         },
-        enabled: !!selectedUser && !!currentUser && !isMessagesLoading,
+        enabled: !!selectedUser && !!currentUser && !isUserLoading,
     });
 
     console.log('first messages', messages)

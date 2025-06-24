@@ -61,6 +61,8 @@ const ChatBottomBar = () => {
             receiverId: selectedUser?.id || "text"
         });
         setMessage("");
+
+        textAreaRef.current?.focus();
     };
 
 
