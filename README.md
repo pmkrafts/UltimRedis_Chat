@@ -26,7 +26,7 @@ A modern real-time chat application built with Next.js, React, TypeScript, and a
 
 ## Features
 
-- **Authentication:** Kinde Auth for secure user login and session management
+- **Authentication:** Secure user login and session management with Kinde Auth
 - **Real-time Messaging:** Powered by Pusher and Upstash Redis
 - **Rich UI:** Built with Next.js, Tailwind CSS, Radix UI, Framer Motion, and Lucide Icons
 - **Emoji Support:** Emoji picker with @emoji-mart/react and @emoji-mart/data
